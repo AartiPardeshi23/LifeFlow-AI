@@ -14,15 +14,17 @@ jobs:
         working-directory: MobileApp
 
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: MobileApp/package-lock.json
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: npm install
 
       - name: Build Vite App
@@ -36,17 +38,24 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+          cache: gradle
 
-      - name: Make Gradle executable
+      - name: Grant Execute Permission
         run: chmod +x android/gradlew
 
-      - name: Build APK
+      - name: Build Release APK
         run: |
           cd android
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease --stacktrace
+
+      - name: List Generated APKs
+        run: |
+          echo "Generated APK files:"
+          find android -type f -name "*.apk"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: LifeFlowAI-APK
-          path: MobileApp/android/app/build/outputs/apk/release/app-release.apk
+          path: MobileApp/android/app/build/outputs/apk/**/*.apk
+          if-no-files-found: error
