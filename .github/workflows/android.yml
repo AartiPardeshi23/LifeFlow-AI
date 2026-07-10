@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build:
@@ -14,20 +15,19 @@ jobs:
         working-directory: MobileApp
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: MobileApp/package-lock.json
 
-      - name: Install Dependencies
-        run: npm install
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Build Vite App
+      - name: Build web app
         run: npm run build
 
       - name: Sync Capacitor
@@ -40,22 +40,19 @@ jobs:
           java-version: 21
           cache: gradle
 
-      - name: Grant Execute Permission
+      - name: Make Gradle executable
         run: chmod +x android/gradlew
 
-      - name: Build Release APK
+      - name: Build Debug APK
         run: |
           cd android
-          ./gradlew assembleRelease --stacktrace
+          ./gradlew assembleDebug --stacktrace
 
-      - name: List Generated APKs
-        run: |
-          echo "Generated APK files:"
-          find android -type f -name "*.apk"
+      - name: Show APK
+        run: find android -name "*.apk"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: LifeFlowAI-APK
-          path: MobileApp/android/app/build/outputs/apk/**/*.apk
-          if-no-files-found: error
+          name: LifeFlowAI-Debug
+          path: MobileApp/android/app/build/outputs/apk/debug/app-debug.apk
